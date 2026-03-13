@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Campus Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI;}
+body{background:linear-gradient(135deg,#4facfe,#00f2fe);height:100vh;display:flex;justify-content:center;align-items:center;transition:0.4s;}
+.dark{background:#121212;color:white;}
+.container{width:95%;max-width:1300px;height:90vh;background:white;border-radius:20px;display:grid;grid-template-columns:300px 1fr;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,0.3);}
+.dark .container{background:#1e1e1e;}
+.sidebar{background:#2f80ed;color:white;padding:20px;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar h2{text-align:center;margin-bottom:20px;}
+.accordion{background:rgba(255,255,255,0.2);border:none;padding:12px;border-radius:10px;margin-bottom:5px;color:white;cursor:pointer;transition:0.3s; text-align:left;}
+.accordion:hover{background:white;color:#2f80ed;}
+.panel{max-height:0;overflow:hidden;transition:0.3s;padding-left:10px;display:flex;flex-direction:column;}
+.panel button{margin:5px 0;border:none;padding:8px;border-radius:8px;cursor:pointer;background:#e0e0e0;color:#333;}
+.dark .panel button{background:#333;color:white;}
+.main{display:flex;flex-direction:column;}
+.topbar{padding:15px;background:#f3f3f3;display:flex;justify-content:space-between;align-items:center;}
+.dark .topbar{background:#333;}
+.search{width:50%;padding:8px;border-radius:20px;border:none;padding-left:15px;}
+.chatbox{flex:1;padding:20px;overflow-y:auto;}
+.message{margin-bottom:15px;max-width:70%;padding:12px;border-radius:12px;}
+.user{background:#2f80ed;color:white;margin-left:auto;}
+.bot{background:#e8e8e8;}
+.dark .bot{background:#444;}
+.input-area{display:flex;padding:10px;gap:10px;background:#f3f3f3;}
+.dark .input-area{background:#333;}
+.input-area input{flex:1;padding:10px;border-radius:20px;border:none;padding-left:15px;}
+.input-area button{border:none;background:#2f80ed;color:white;padding:10px 20px;border-radius:20px;cursor:pointer;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px;}
+.card{background:#f7f7f7;padding:15px;border-radius:15px;text-align:center;}
+.dark .card{background:#2c2c2c;}
+.card img{width:100%;border-radius:12px;margin-bottom:10px;}
+.college-details{background:#f7f7f7;padding:15px;border-radius:15px;margin-bottom:15px;}
+.dark .college-details{background:#2c2c2c;}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="sidebar">
+<h2>🏫 Campus AI</h2>
+
+<button class="accordion">Facilities</button>
+<div class="panel">
+<button onclick="showFacility('Library')">Library</button>
+<button onclick="showFacility('Cafeteria')">Cafeteria</button>
+<button onclick="showFacility('Sports')">Sports Complex</button>
+</div>
+
+<button class="accordion">Information</button>
+<div class="panel">
+<button onclick="showCollegeDetails()">College Details</button>
+<button onclick="showAnnouncements()">Announcements</button>
+<button onclick="showTimetable()">Timetable</button>
+<button onclick="showNavigation()">Navigation</button>
+</div>
+
+<button onclick="toggleDark()">🌙 Dark Mode</button>
+<button onclick="startVoice()">🎤 Voice Command</button>
+</div>
+
+<div class="main">
+<div class="topbar">
+<input class="search" placeholder="Search campus info..." onkeyup="smartSearch(this.value)">
+<span id="time"></span>
+</div>
+
+<div class="chatbox" id="chat">
+
+<div class="cards">
+<div class="card">
+<img src="https://images.unsplash.com/photo-1581092580493-6c7b85e1a6e1?auto=format&fit=crop&w=400&q=60" alt="Library">
+<h3>Library</h3>
+<p>Open: 8AM - 10PM</p>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1578753943617-2f462d06ab6d?auto=format&fit=crop&w=400&q=60" alt="Cafeteria">
+<h3>Cafeteria</h3>
+<p>Open: 7AM - 8PM</p>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1584466977777-0cfc4cf3e728?auto=format&fit=crop&w=400&q=60" alt="Sports Complex">
+<h3>Sports Complex</h3>
+<p>Open: 6AM - 9PM</p>
+</div>
+</div>
+
+</div>
+
+<div class="input-area">
+<input id="userInput" placeholder="Ask campus assistant...">
+<button onclick="sendMessage()">Send</button>
+</div>
+</div>
+</div>
+
+<script>
+// Accordion Menu
+let acc=document.getElementsByClassName("accordion");
+for(let i=0;i<acc.length;i++){
+acc[i].addEventListener("click",function(){
+this.classList.toggle("active");
+let panel=this.nextElementSibling;
+panel.style.maxHeight = panel.style.maxHeight ? null : panel.scrollHeight + "px";
+});
+}
+
+// Chat functions
+const chat=document.getElementById("chat");
+function addMessage(text,cls){
+let msg=document.createElement("div")
+msg.className="message "+cls
+msg.innerText=text
+chat.appendChild(msg)
+chat.scrollTop=chat.scrollHeight
+}
+
+function sendMessage(){
+let input=document.getElementById("userInput")
+let text=input.value
+if(!text) return
+addMessage(text,"user")
+let response=assistantLogic(text)
+setTimeout(()=>{addMessage(response,"bot")},500)
+input.value=""
+}
+
+// Assistant logic
+function assistantLogic(text){
+text=text.toLowerCase()
+if(text.includes("library")) return "📚 Library is open from 8 AM to 5 PM."
+if(text.includes("cafeteria")) return "🍔 Cafeteria opens from 10 AM to 2 PM."
+if(text.includes("sports")) return "🏀 Sports complex opens 6 AM to 9 PM."
+if(text.includes("wifi")) return "📶 Campus WiFi: Connect to CAMPUS-NET and login with your student ID."
+if(text.includes("class")) return "📖 Your next class is Computer Networks at Room B204."
+if(text.includes("college")) return "🏫 This is A D Patel Institue of Tech , established 1995, located at karmsad,Annad."
+return "🤖 I'm your Smart Campus Assistant. Ask me about facilities, timetable, or navigation!"
+}
+
+// Options
+function showFacility(name){
+let text="";
+if(name=="Library") text="📚 Library: Open 8AM-10PM. Address: Block A";
+if(name=="Cafeteria") text="🍔 Cafeteria: Open 7AM-8PM. Located near central garden";
+if(name=="Sports") text="🏀 Sports Complex: Open 6AM-9PM. Next to Gymnasium";
+addMessage(text,"bot")
+}
+
+function showAnnouncements(){
+addMessage("📢 Announcement: Tech Fest starts next week!","bot")
+}
+
+function showTimetable(){
+addMessage("📅 Monday: AI Lab\nTuesday: DBMS\nWednesday: Networks\nThursday: ML\nFriday: Project","bot")
+}
+
+function showNavigation(){
+addMessage("🗺 Popular places: Library, Cafeteria, Admin Block, Auditorium","bot")
+}
+
+function showCollegeDetails(){
+addMessage("🏫 A D Patel Institue of Tech\nAddress: Karansad , Annad\nFor more College Details:adit.ac.in\nPhone: +1234567890","bot")
+}
+
+function toggleDark(){
+document.body.classList.toggle("dark")
+}
+
+function smartSearch(query){
+query=query.toLowerCase()
+if(query.includes("library")) addMessage("🔎 Found: Library building near Block A","bot")
+if(query.includes("canteen")) addMessage("🔎 Found: Cafeteria near central garden","bot")
+}
+
+function updateClock(){
+let now=new Date()
+document.getElementById("time").innerText=now.toLocaleTimeString()
+}
+setInterval(updateClock,1000)
+
+// Voice
+function startVoice(){
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition
+const recognition=new SpeechRecognition()
+recognition.start()
+recognition.onresult=function(event){
+let text=event.results[0][0].transcript
+document.getElementById("userInput").value=text
+sendMessage()
+}
+}
+</script>
+</body>
+</html>
